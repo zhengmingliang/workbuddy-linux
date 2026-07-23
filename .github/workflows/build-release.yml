@@ -55,10 +55,16 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
-            p7zip-full curl nodejs npm python3 \
+            curl nodejs npm python3 \
             dpkg-dev rpm squashfs-tools zstd \
             libx11-dev libxkbfile-dev libsecret-1-dev libglib2.0-dev \
             pkg-config make g++
+
+          # Install 7zip v21+ (Ubuntu 22.04's p7zip-full is v16, too old)
+          curl -fsSL -o /tmp/7z.tar.xz "https://7-zip.org/a/7z2409-linux-x64.tar.xz"
+          sudo tar xf /tmp/7z.tar.xz -C /usr/local/bin/ 7zz
+          sudo chmod +x /usr/local/bin/7zz
+          7zz --help >/dev/null 2>&1 && echo "7zz: OK"
 
           echo "node: $(node --version)"
           echo "npm: $(npm --version)"
