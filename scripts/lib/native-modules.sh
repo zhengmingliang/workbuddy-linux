@@ -235,24 +235,24 @@ build_native_module_fresh() {
     rm -rf "$build_dir"
     mkdir -p "$build_dir"
 
-    info "  Building $module_name@$module_version from source for Electron $ELECTRON_VERSION"
+    info "  Building $module_name@$module_version from source for Electron $electron_version"
     (
         cd "$build_dir"
         echo '{"private":true}' > package.json
 
         # Install Electron (headers only, skip the full download)
-        npm install "electron@$ELECTRON_VERSION" --save-dev --ignore-scripts --no-audit --no-fund 2>&1 >/dev/null
+        npm install "electron@$electron_version" --save-dev --ignore-scripts --no-audit --no-fund 2>&1 >/dev/null
 
         # Install the module's full source
         npm install "$module_name@$module_version" --ignore-scripts --no-audit --no-fund 2>&1 >/dev/null
 
         # Rebuild for the target Electron
-        npm_config_disturl="$ELECTRON_HEADERS_URL" \
-        NPM_CONFIG_DISTURL="$ELECTRON_HEADERS_URL" \
+        npm_config_disturl="$electron_headers_url" \
+        NPM_CONFIG_DISTURL="$electron_headers_url" \
         npx --yes @electron/rebuild \
-            -v "$ELECTRON_VERSION" \
+            -v "$electron_version" \
             --force \
-            --dist-url "$ELECTRON_HEADERS_URL" \
+            --dist-url "$electron_headers_url" \
             --only "$module_name" 2>&1
     )
 
@@ -286,7 +286,9 @@ rebuild_critical_modules() {
     local app_dir="$1"
 
     info "=== Phase 3: Rebuilding native modules from source ==="
-    info "  Target: Electron $ELECTRON_VERSION | Headers: $ELECTRON_HEADERS_URL"
+    local electron_version="${ELECTRON_VERSION:-41.1.1}"
+    local electron_headers_url="${ELECTRON_HEADERS_URL:-https://artifacts.electronjs.org/headers/dist}"
+    info "  Target: Electron $electron_version | Headers: $electron_headers_url"
 
     local module_name module_version
 
