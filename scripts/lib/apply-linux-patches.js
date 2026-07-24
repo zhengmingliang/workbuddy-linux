@@ -754,7 +754,11 @@ if (source.includes(marker)) {
             + source.slice(updateMenuIdx + updateMenuMarker.length);
         markRequired('updateMenuDisabled', true);
     } else {
-        markRequired('updateMenuDisabled', false);
+        // v5.3.3+ removed getUpdateMenuItem; update menu is now handled
+        // via MENU_COMMAND_IDS.CHECK_FOR_UPDATES switch case.
+        // The update RPCs are still disabled below, so the menu item
+        // will simply not trigger any real updater action.
+        markOptional('updateMenuDisabled', false);
     }
 
     // Neutralize updateCheck / updateDownload / updateQuitAndInstall RPCs
