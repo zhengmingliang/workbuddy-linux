@@ -407,9 +407,9 @@ main() {
     lydell_platform_package="$(lydell_node_pty_linux_package 2>/dev/null || true)"
 
     if [ -d "$native_dir/node_modules" ]; then
-        rebuild_native_modules "$native_dir"
+        rebuild_native_modules "$native_dir" || warn "Native module rebuild had non-fatal errors"
     elif [ -d "$INSTALL_DIR/resources/app/node_modules" ]; then
-        rebuild_native_modules "$INSTALL_DIR/resources/app"
+        rebuild_native_modules "$INSTALL_DIR/resources/app" || warn "Native module rebuild had non-fatal errors"
     fi
 
     # Apply Linux-specific runtime patches inside app.asar so the main
