@@ -61,7 +61,7 @@ jobs:
             pkg-config make g++
 
           # Install 7zip v21+ (Ubuntu 22.04's p7zip-full is v16, too old)
-          curl -fsSL -o /tmp/7z.tar.xz "https://7-zip.org/a/7z2409-linux-x64.tar.xz"
+          curl -fsSL -o /tmp/7z.tar.xz "https://7-zip.org/a/7z2301-linux-x64.tar.xz"
           sudo tar xf /tmp/7z.tar.xz -C /usr/local/bin/ 7zz
           sudo chmod +x /usr/local/bin/7zz
           7zz --help >/dev/null 2>&1 && echo "7zz: OK"
