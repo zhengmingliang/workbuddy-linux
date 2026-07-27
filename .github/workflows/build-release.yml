@@ -53,14 +53,50 @@ jobs:
       # ── 3. Install system dependencies ───────────────────────
       - name: Install system dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends \
-            curl nodejs npm python3 \
+          set -euo pipefail
+
+          # Debug: show pre-installed tool versions
+          echo "=== Pre-installed tools ==="
+          node --version 2>/dev/null || echo "node: not found"
+          npm --version 2>/dev/null || echo "npm: not found"
+          python3 --version 2>/dev/null || echo "python3: not found"
+          echo "==========================="
+
+          # Retry wrapper for transient apt mirror failures
+          apt_install() {
+            local retries=3 delay=5
+            for i in $(seq 1 $retries); do
+              if sudo apt-get install -y -qq --no-install-recommends "$@"; then
+                return 0
+              fi
+              echo "apt-get install failed (attempt $i/$retries), retrying in ${delay}s..."
+              sleep $delay
+              sudo apt-get update -qq || true
+              delay=$((delay * 2))
+            done
+            echo "ERROR: apt-get install failed after $retries attempts"
+            return 1
+          }
+
+          # Update package lists with retry
+          for i in 1 2 3; do
+            if sudo apt-get update -qq; then break; fi
+            echo "apt-get update failed (attempt $i/3), retrying..."
+            sleep 5
+          done
+
+          # Install build dependencies
+          # NOTE: do NOT install nodejs/npm from apt — GitHub runners already
+          # have Node.js 18+ pre-installed. Ubuntu 22.04's apt nodejs is v12
+          # which conflicts with the pre-installed version.
+          apt_install \
+            curl python3 \
             dpkg-dev rpm rpm-build squashfs-tools zstd \
             libx11-dev libxkbfile-dev libsecret-1-dev libglib2.0-dev \
             pkg-config make g++
+
           # Verify rpmbuild
-          which rpmbuild && rpmbuild --version || echo "rpmbuild not found after install"
+          which rpmbuild && rpmbuild --version
 
           # Install 7zip v21+ (Ubuntu 22.04's p7zip-full is v16, too old)
           curl -fsSL -o /tmp/7z.tar.xz "https://7-zip.org/a/7z2301-linux-x64.tar.xz"
@@ -68,8 +104,11 @@ jobs:
           sudo chmod +x /usr/local/bin/7zz
           7zz --help >/dev/null 2>&1 && echo "7zz: OK"
 
+          echo "=== Final tool versions ==="
           echo "node: $(node --version)"
           echo "npm: $(npm --version)"
+          echo "rpmbuild: $(rpmbuild --version)"
+          echo "==========================="
 
       # ── 4. Build WorkBuddy Linux app ────────────────────────
       - name: Build WorkBuddy Linux app
@@ -151,20 +190,15 @@ jobs:
           rm -f "${OUTPUT}.squashfs"
           ls -lh "$OUTPUT"
 
-      # ── 7. Build RPM (best-effort) ──────────────────────────
+      # ── 7. Build RPM ─────────────────────────────────────────
       - name: Package RPM
         run: |
-          echo "::group::Installing rpmbuild"
-          sudo apt-get install -y -qq rpm 2>/dev/null || true
-          which rpmbuild && echo "rpmbuild: OK" || echo "rpmbuild: NOT FOUND"
+          set -euo pipefail
+          echo "::group::Verify rpmbuild"
+          which rpmbuild && rpmbuild --version
           echo "::endgroup::"
           echo "::group::Building .rpm"
-          if command -v rpmbuild >/dev/null 2>&1; then
-            bash scripts/build-rpm.sh
-          else
-            echo "ERROR: rpmbuild not available"
-            exit 1
-          fi
+          bash scripts/build-rpm.sh
           echo "::endgroup::"
 
       # ── 8. Upload artifacts ─────────────────────────────────
