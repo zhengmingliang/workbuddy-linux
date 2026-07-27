@@ -76,6 +76,11 @@ License: MIT
 BuildArch: $arch
 Requires: gtk3, nss, libXScrnSaver, alsa-lib, libsecret, libxkbfile
 
+# Disable automatic stripping of binaries — the app bundles cross-platform
+# native modules (koffi.node for arm64/riscv64/etc.) that strip cannot process.
+%define __strip /bin/true
+%define __os_install_post %{nil}
+
 %description
 This package is generated locally from a user-owned official WorkBuddy
 macOS copy. It does not redistribute upstream software through the source
