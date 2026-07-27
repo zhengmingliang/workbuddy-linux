@@ -91,7 +91,7 @@ jobs:
           # which conflicts with the pre-installed version.
           apt_install \
             curl python3 \
-            dpkg-dev rpm rpm-build squashfs-tools zstd \
+            dpkg-dev rpm squashfs-tools zstd \
             libx11-dev libxkbfile-dev libsecret-1-dev libglib2.0-dev \
             pkg-config make g++
 
